@@ -9,21 +9,77 @@
 (load "include.ss")
 
 ;; contains simple dictionary definition
-(load "test-dictionary.ss")
+(load "dictionary.ss")
 
 ;; -----------------------------------------------------
 ;; HELPER FUNCTIONS
 
 ;; *** CODE FOR ANY HELPER FUNCTION GOES HERE ***
+(define flatten
+  (lambda (l)
+    (cond ((null? l) '())
+          ((pair? l) (append (flatten (car l)) (flatten (cdr l))))
+          (else (list l))
+          )
+    )
+  )
 
+(define dictionaryHash
+  (lambda (hashfunctionlist dict)
+    (map
+     (lambda (hashfunction)
+       (map
+        hashfunction
+        dict
+        )
+       )
+     hashfunctionlist
+     )
+    )
+  )
+
+(define bitVectorCreate
+  (lambda (wordHashList dictForHash)
+    (map
+     (lambda (current)
+       (validHash current dictForHash)
+       )
+     wordHashList
+     )
+    )
+  )
+(define validHash
+  (lambda (wordHash hashFromDict)
+    (reduce
+     (lambda (x y) (or x y))
+     (map
+      (lambda (input)
+        (= wordHash input)
+        )
+      hashFromDict
+      )
+     #f
+     )
+    )
+  )
+
+(define validWord
+  (lambda (vector)
+    (reduce (lambda (currentTemp true)
+              (and currentTemp true) vector #t)
+            )
+    )
+  )
 
 ;; -----------------------------------------------------
 ;; KEY FUNCTION
 
 (define key
   (lambda (w)
-     'SOME_CODE_GOES_HERE ;; *** FUNCTION BODY IS MISSING ***
-))
+     (if (null? w)
+         5187
+         (+ (* 29 (key (cdr w))) (ctv(car w)))
+)))
 
 ;; -----------------------------------------------------
 ;; EXAMPLE KEY VALUES
@@ -37,7 +93,8 @@
 ;; value of parameter "size" should be a prime number
 (define gen-hash-division-method
   (lambda (size) ;; range of values: 0..size-1
-     'SOME_CODE_GOES_HERE ;; *** FUNCTION BODY IS MISSING ***
+     (lambda (w)
+       (modulo (key w) size))
 ))
 
 ;; value of parameter "size" is not critical
@@ -46,8 +103,9 @@
 
 (define gen-hash-multiplication-method
   (lambda (size) ;; range of values: 0..size-1
-     'SOME_CODE_GOES_HERE ;; *** FUNCTION BODY IS MISSING ***
-))
+     (lambda (w)
+       (floor (* size (- (* (key w) A) (floor (* (key w) A)))))
+)))
 
 
 ;; -----------------------------------------------------
@@ -88,8 +146,27 @@
 
 (define gen-checker
   (lambda (hashfunctionlist dict)
-     'SOME_CODE_GOES_HERE ;; *** FUNCTION BODY IS MISSING ***
-))
+    (let ((completeDictionary (dictionaryHash hashfunctionlist dict)))
+      (lambda (w)
+        (let ((wordHashList
+               (map
+                (lambda (functionHash)
+                        (functionHash w)
+                  )
+                hashfunctionlist
+                )
+       )
+    )
+          (reduce
+           (lambda (x y) (and x y))
+           (bitVectorCreate wordHashList (flatten completeDictionary))
+           #t
+           )
+          )
+        )
+      )
+    )
+  )
 
 
 ;; -----------------------------------------------------
